@@ -170,6 +170,8 @@ function App() {
 
   const handleCanvasClick = useCallback(
     (e) => {
+      createFirework(e.clientX, e.clientY)
+
       setIsMouseDown(true)
       startContinuousFireworks(e.clientX, e.clientY)
     },
