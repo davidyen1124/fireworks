@@ -170,7 +170,7 @@ function App() {
       setIsPointerDown(true)
       startContinuousFireworks(e.clientX, e.clientY)
     },
-    [startContinuousFireworks]
+    [startContinuousFireworks, createFirework]
   )
 
   const handleMouseUp = useCallback(() => {
@@ -185,7 +185,7 @@ function App() {
       setIsPointerDown(true)
       startContinuousFireworks(touch.clientX, touch.clientY)
     },
-    [startContinuousFireworks]
+    [startContinuousFireworks, createFirework]
   )
 
   const handleTouchMove = useCallback(
