@@ -221,11 +221,6 @@ function App() {
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    starsRef.current = Array.from(
-      { length: 200 },
-      () => new Star(canvas.width, canvas.height)
-    )
-
     return () => {
       window.removeEventListener('resize', handleResize)
     }
