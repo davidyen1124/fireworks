@@ -110,11 +110,9 @@ class Rocket {
 
       // Decrement life each frame
       p.life--
-      if (p.life <= 0) {
-        this.positions.splice(i, 1)
-        i--
-      }
     }
+
+    this.positions = this.positions.filter((p) => p.life > 0)
   }
 }
 
