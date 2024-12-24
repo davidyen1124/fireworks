@@ -37,7 +37,7 @@ class Particle {
     this.life = 100
   }
 
-  update(ctx) {
+  update() {
     this.velocity.y += this.gravity
     this.x += this.velocity.x
     this.y += this.velocity.y
@@ -46,8 +46,6 @@ class Particle {
     if (this.life < 20) {
       this.radius = Math.max(0, this.radius - 0.1)
     }
-
-    this.draw(ctx)
   }
 
   draw(ctx) {
@@ -76,13 +74,12 @@ class Rocket {
     this.positions = []
   }
 
-  update(ctx) {
+  update() {
     this.velocity.y += this.gravity
     this.x += this.velocity.x
     this.y += this.velocity.y
 
     this.positions.push({ x: this.x, y: this.y, life: 20, color: this.color })
-    this.draw(ctx)
 
     // If rocket velocity.y > 0 => means it's falling => time to explode
     return this.velocity.y > 0
@@ -247,7 +244,8 @@ function App() {
       // 4) Update rockets
       const nextRockets = []
       for (const rocket of rocketsRef.current) {
-        const shouldExplode = rocket.update(ctx)
+        const shouldExplode = rocket.update()
+        rocket.draw(ctx)
         if (shouldExplode) {
           explodeFirework(rocket.x, rocket.y, rocket.color)
         } else {
@@ -259,7 +257,8 @@ function App() {
       // 5) Update particles
       const nextParticles = []
       for (const particle of particlesRef.current) {
-        particle.update(ctx)
+        particle.update()
+        particle.draw(ctx)
         if (particle.life > 0 && particle.radius > 0) {
           nextParticles.push(particle)
         }
