@@ -119,8 +119,8 @@ function App() {
   const starsRef = useRef([])
   const rocketsRef = useRef([])
   const particlesRef = useRef([])
-  const [isMouseDown, setIsMouseDown] = useState(false)
-  const mousePositionRef = useRef({ x: 0, y: 0 })
+  const [isPointerDown, setIsPointerDown] = useState(false)
+  const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
 
   const createFirework = useCallback((x, y) => {
@@ -136,10 +136,10 @@ function App() {
 
   const startContinuousFireworks = useCallback(
     (x, y) => {
-      mousePositionRef.current = { x, y }
+      pointerPositionRef.current = { x, y }
       if (!fireworkIntervalRef.current) {
         fireworkIntervalRef.current = setInterval(() => {
-          const { x, y } = mousePositionRef.current
+          const { x, y } = pointerPositionRef.current
           createFirework(x, y)
         }, 100)
       }
@@ -156,32 +156,33 @@ function App() {
 
   const handleMouseMove = useCallback(
     (e) => {
-      if (isMouseDown) {
-        mousePositionRef.current = { x: e.clientX, y: e.clientY }
+      if (isPointerDown) {
+        pointerPositionRef.current = { x: e.clientX, y: e.clientY }
       }
     },
-    [isMouseDown]
+    [isPointerDown]
   )
 
-  const handleCanvasClick = useCallback(
+  const handleMouseDown = useCallback(
     (e) => {
       createFirework(e.clientX, e.clientY)
 
-      setIsMouseDown(true)
+      setIsPointerDown(true)
       startContinuousFireworks(e.clientX, e.clientY)
     },
     [startContinuousFireworks]
   )
 
   const handleMouseUp = useCallback(() => {
-    setIsMouseDown(false)
+    setIsPointerDown(false)
     stopContinuousFireworks()
   }, [stopContinuousFireworks])
 
   const handleTouchStart = useCallback(
     (e) => {
       const touch = e.touches[0]
-      setIsMouseDown(true)
+      createFirework(touch.clientX, touch.clientY)
+      setIsPointerDown(true)
       startContinuousFireworks(touch.clientX, touch.clientY)
     },
     [startContinuousFireworks]
@@ -189,16 +190,16 @@ function App() {
 
   const handleTouchMove = useCallback(
     (e) => {
-      if (isMouseDown) {
+      if (isPointerDown) {
         const touch = e.touches[0]
-        mousePositionRef.current = { x: touch.clientX, y: touch.clientY }
+        pointerPositionRef.current = { x: touch.clientX, y: touch.clientY }
       }
     },
-    [isMouseDown]
+    [isPointerDown]
   )
 
   const handleTouchEnd = useCallback(() => {
-    setIsMouseDown(false)
+    setIsPointerDown(false)
     stopContinuousFireworks()
   }, [stopContinuousFireworks])
 
@@ -304,7 +305,7 @@ function App() {
   return (
     <canvas
       ref={canvasRef}
-      onMouseDown={handleCanvasClick}
+      onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseUp}
