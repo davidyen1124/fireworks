@@ -154,51 +154,34 @@ function App() {
     }
   }, [])
 
-  const handleMouseMove = useCallback(
-    (e) => {
-      if (isPointerDown) {
-        pointerPositionRef.current = { x: e.clientX, y: e.clientY }
-      }
-    },
-    [isPointerDown]
-  )
-
-  const handleMouseDown = useCallback(
-    (e) => {
-      createFirework(e.clientX, e.clientY)
-
-      setIsPointerDown(true)
-      startContinuousFireworks(e.clientX, e.clientY)
-    },
-    [startContinuousFireworks, createFirework]
-  )
-
-  const handleMouseUp = useCallback(() => {
-    setIsPointerDown(false)
-    stopContinuousFireworks()
-  }, [stopContinuousFireworks])
-
-  const handleTouchStart = useCallback(
-    (e) => {
+  const getPointerPosition = useCallback((e) => {
+    if (e.touches) {
       const touch = e.touches[0]
-      createFirework(touch.clientX, touch.clientY)
+      return { x: touch.clientX, y: touch.clientY }
+    }
+    return { x: e.clientX, y: e.clientY }
+  }, [])
+
+  const handlePointerDown = useCallback(
+    (e) => {
+      const pos = getPointerPosition(e)
+      createFirework(pos.x, pos.y)
       setIsPointerDown(true)
-      startContinuousFireworks(touch.clientX, touch.clientY)
+      startContinuousFireworks(pos.x, pos.y)
     },
-    [startContinuousFireworks, createFirework]
+    [getPointerPosition, startContinuousFireworks, createFirework]
   )
 
-  const handleTouchMove = useCallback(
+  const handlePointerMove = useCallback(
     (e) => {
       if (isPointerDown) {
-        const touch = e.touches[0]
-        pointerPositionRef.current = { x: touch.clientX, y: touch.clientY }
+        pointerPositionRef.current = getPointerPosition(e)
       }
     },
-    [isPointerDown]
+    [isPointerDown, getPointerPosition]
   )
 
-  const handleTouchEnd = useCallback(() => {
+  const handlePointerUp = useCallback(() => {
     setIsPointerDown(false)
     stopContinuousFireworks()
   }, [stopContinuousFireworks])
@@ -305,14 +288,14 @@ function App() {
   return (
     <canvas
       ref={canvasRef}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      onMouseDown={handlePointerDown}
+      onMouseUp={handlePointerUp}
+      onMouseMove={handlePointerMove}
+      onMouseLeave={handlePointerUp}
+      onTouchStart={handlePointerDown}
+      onTouchMove={handlePointerMove}
+      onTouchEnd={handlePointerUp}
+      onTouchCancel={handlePointerUp}
       className='fireworks-canvas'
     />
   )
