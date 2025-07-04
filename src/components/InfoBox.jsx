@@ -1,13 +1,8 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 import './InfoBox.css'
 
-export default function InfoBox({
-  isPublic,
-  name,
-  clientCount,
-  onToggleRoom,
-  onSaveName,
-}) {
+export default function InfoBox({ isPublic, name, clientCount, onSaveName }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(name)
 
@@ -64,4 +59,11 @@ export default function InfoBox({
       )}
     </>
   )
+}
+
+InfoBox.propTypes = {
+  isPublic: PropTypes.bool.isRequired,
+  name: PropTypes.string.isRequired,
+  clientCount: PropTypes.number.isRequired,
+  onSaveName: PropTypes.func.isRequired,
 }
