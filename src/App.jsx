@@ -1,6 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import './App.css'
-import { initPeer } from './network'
 
 class Star {
   constructor(canvasWidth, canvasHeight) {
@@ -136,7 +135,6 @@ function App() {
   const [brushColor, setBrushColor] = useState(
     () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
   )
-  const netRef = useRef(null)
 
   const createFirework = useCallback(
     (x, y, color = brushColor) => {
@@ -155,7 +153,6 @@ function App() {
   const createAndSend = useCallback(
     (x, y, color = brushColor) => {
       createFirework(x, y, color)
-      netRef.current?.broadcast({ t: 'launch', x, y, color })
     },
     [createFirework, brushColor]
   )
@@ -211,37 +208,6 @@ function App() {
     setIsPointerDown(false)
     stopContinuousFireworks()
   }, [stopContinuousFireworks])
-
-  const shareLink = useCallback(async () => {
-    const myId = netRef.current?.getMyId()
-    if (!myId) {
-      alert('Please wait for connection to establish')
-      return
-    }
-
-    const url = new URL(location.href)
-    url.searchParams.set('peer', myId)
-    const shareUrl = url.toString()
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Fireworks 🎆', url: shareUrl })
-      } catch {
-        // user dismissed sheet
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl)
-      alert('Link copied!')
-    }
-  }, [])
-
-  useEffect(() => {
-    netRef.current = initPeer(({ t, ...payload }) => {
-      if (t === 'launch') {
-        createFirework(payload.x, payload.y, payload.color)
-      }
-    })
-  }, [createFirework])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -376,9 +342,6 @@ function App() {
             />
           )
         })}
-        <button className="share-button" onClick={shareLink}>
-          🔗
-        </button>
       </div>
     </>
   )

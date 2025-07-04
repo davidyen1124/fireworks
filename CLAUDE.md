@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a React-based interactive fireworks visualization that uses HTML Canvas for rendering and PeerJS for real-time multiplayer functionality.
+This is a React-based interactive fireworks visualization that uses HTML Canvas for rendering.
 
 ### Core Components
 
@@ -23,14 +23,6 @@ This is a React-based interactive fireworks visualization that uses HTML Canvas 
   - `Particle` - Explosion particles with physics simulation
 - Unified pointer event handling for both mouse and touch interactions
 - Color palette system for customizable firework colors
-- Real-time networking integration via PeerJS
-
-**network.js** - Peer-to-peer networking layer:
-
-- Initializes PeerJS connections with Google STUN servers
-- Handles peer discovery and connection management
-- Broadcasts firework launch events to connected peers
-- Manages connection lifecycle (open, data, close, error)
 
 ### Key Technical Details
 
@@ -41,14 +33,6 @@ This is a React-based interactive fireworks visualization that uses HTML Canvas 
 - Touch events use `passive: false` to prevent scrolling
 - Vite configured with base path `/fireworks/` for GitHub Pages deployment
 
-### Networking Architecture
-
-The app supports real-time multiplayer fireworks via WebRTC:
-
-- Each user gets a unique peer ID from PeerJS
-- Firework launch events are broadcast to all connected peers
-- Events include position (x,y) and color information
-- No central server required - uses PeerJS's free relay service
 
 ### Development Notes
 
