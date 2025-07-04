@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback, useState } from 'react'
 import './App.css'
 import { useWebSocket } from './hooks/useWebSocket'
 import { generateRoomId } from './utils/roomId'
+import { randomName } from './utils/randomName'
 
 const colorOptions = [
   '#B22234', // "Old Glory" red
@@ -67,7 +68,12 @@ class Particle {
 }
 
 class Rocket {
-  constructor(x, y, color = `hsl(${Math.random() * 360}, 50%, 50%)`) {
+  constructor(
+    x,
+    y,
+    color = `hsl(${Math.random() * 360}, 50%, 50%)`,
+    name = '🎆'
+  ) {
     this.x = x
     this.y = y
     this.radius = 2
@@ -77,6 +83,7 @@ class Rocket {
     }
     this.gravity = 0.1
     this.color = color
+    this.name = name
 
     // We'll store previous positions for the trail:
     this.positions = []
@@ -121,8 +128,36 @@ class Rocket {
   }
 }
 
+class Label {
+  constructor(text, x, y) {
+    this.text = text
+    this.x = x
+    this.y = y
+    this.life = 60
+  }
+
+  update() {
+    this.y -= 0.3
+    this.life--
+  }
+
+  draw(ctx) {
+    ctx.save()
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.globalAlpha = this.life / 60
+    ctx.fillStyle = '#fff'
+    ctx.font = '16px system-ui'
+    ctx.textAlign = 'center'
+    ctx.fillText(this.text, this.x, this.y)
+    ctx.restore()
+  }
+}
+
 function App() {
   const [isPointerDown, setIsPointerDown] = useState(false)
+  const [name, setName] = useState(
+    () => localStorage.getItem('name') || randomName()
+  )
   const [brushColor, setBrushColor] = useState(
     () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
   )
@@ -136,37 +171,40 @@ function App() {
   const starsRef = useRef([])
   const rocketsRef = useRef([])
   const particlesRef = useRef([])
+  const labelsRef = useRef([])
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
   const brushColorRef = useRef(brushColor)
   const colorPickerRef = useRef(null)
 
-  const createFirework = useCallback((x, y, color) => {
-    rocketsRef.current.push(new Rocket(x, y, color))
+  const createFirework = useCallback((x, y, color, name) => {
+    rocketsRef.current.push(new Rocket(x, y, color, name))
   }, [])
 
   const handleWsMessage = useCallback(
     data => {
-      if (data.t === 'launch') createFirework(data.x, data.y, data.color)
+      if (data.t === 'launch')
+        createFirework(data.x, data.y, data.color, data.name)
     },
     [createFirework]
   )
 
   const { broadcast, clientCount } = useWebSocket(roomId, handleWsMessage)
 
-  const explodeFirework = useCallback((x, y, color) => {
+  const explodeFirework = useCallback((x, y, color, name) => {
     const particleCount = 50
     for (let i = 0; i < particleCount; i++) {
       particlesRef.current.push(new Particle(x, y, color))
     }
+    labelsRef.current.push(new Label(name || '🎆', x, y))
   }, [])
 
   const createAndSend = useCallback(
     (x, y, color) => {
-      createFirework(x, y, color)
-      broadcast({ t: 'launch', x, y, color })
+      createFirework(x, y, color, name)
+      broadcast({ t: 'launch', x, y, color, name })
     },
-    [createFirework, broadcast]
+    [createFirework, broadcast, name]
   )
 
   const startContinuousFireworks = useCallback(
@@ -313,7 +351,7 @@ function App() {
         const shouldExplode = rocket.update()
         rocket.draw(ctx)
         if (shouldExplode) {
-          explodeFirework(rocket.x, rocket.y, rocket.color)
+          explodeFirework(rocket.x, rocket.y, rocket.color, rocket.name)
         } else {
           nextRockets.push(rocket)
         }
@@ -330,6 +368,17 @@ function App() {
         }
       }
       particlesRef.current = nextParticles
+
+      // 6) Update labels
+      const nextLabels = []
+      for (const label of labelsRef.current) {
+        label.update()
+        label.draw(ctx)
+        if (label.life > 0) {
+          nextLabels.push(label)
+        }
+      }
+      labelsRef.current = nextLabels
 
       requestIdRef.current = requestAnimationFrame(animate)
     }
@@ -425,6 +474,19 @@ function App() {
               {clientCount > 99 ? '99+' : clientCount}
             </span>
           )}
+        </button>
+        <button
+          className="name-button"
+          title={name}
+          onClick={() => {
+            const newName = prompt('Your display name', name)?.trim()
+            if (newName) {
+              setName(newName)
+              localStorage.setItem('name', newName)
+            }
+          }}
+        >
+          👤
         </button>
         <button className="share-button" onClick={shareLink}>
           🔗
