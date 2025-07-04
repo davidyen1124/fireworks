@@ -39,7 +39,6 @@ This is a React-based interactive fireworks visualization that uses HTML Canvas 
 - Canvas uses "lighter" composite operation for bright particle effects
 - Pointer events are unified to handle both mouse and touch consistently
 - Touch events use `passive: false` to prevent scrolling
-- Animation pauses when page is hidden (visibility API)
 - Vite configured with base path `/fireworks/` for GitHub Pages deployment
 
 ### Networking Architecture

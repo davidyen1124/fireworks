@@ -133,7 +133,9 @@ function App() {
     '#96ceb4',
     '#dda0dd',
   ]
-  const [brushColor, setBrushColor] = useState(() => colorOptions[Math.floor(Math.random() * colorOptions.length)])
+  const [brushColor, setBrushColor] = useState(
+    () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
+  )
   const netRef = useRef(null)
 
   const createFirework = useCallback(
@@ -319,62 +321,6 @@ function App() {
       if (requestIdRef.current) {
         cancelAnimationFrame(requestIdRef.current)
       }
-    }
-  }, [explodeFirework])
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (requestIdRef.current) {
-          cancelAnimationFrame(requestIdRef.current)
-        }
-      } else {
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-
-        const animate = () => {
-          ctx.globalCompositeOperation = 'source-over'
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-          ctx.globalCompositeOperation = 'lighter'
-
-          starsRef.current.forEach((star) => {
-            star.update()
-            star.draw(ctx)
-          })
-
-          const nextRockets = []
-          for (const rocket of rocketsRef.current) {
-            const shouldExplode = rocket.update()
-            rocket.draw(ctx)
-            if (shouldExplode) {
-              explodeFirework(rocket.x, rocket.y, rocket.color)
-            } else {
-              nextRockets.push(rocket)
-            }
-          }
-          rocketsRef.current = nextRockets
-
-          const nextParticles = []
-          for (const particle of particlesRef.current) {
-            particle.update()
-            particle.draw(ctx)
-            if (particle.life > 0 && particle.radius > 0) {
-              nextParticles.push(particle)
-            }
-          }
-          particlesRef.current = nextParticles
-
-          requestIdRef.current = requestAnimationFrame(animate)
-        }
-
-        requestIdRef.current = requestAnimationFrame(animate)
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [explodeFirework])
 
