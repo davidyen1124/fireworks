@@ -1,0 +1,3 @@
+# Pages configuration only
+name = "fireworks"
+pages_build_output_dir = "dist"

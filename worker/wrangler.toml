@@ -1,0 +1,14 @@
+# Worker configuration for Cloudflare deployment
+name = "fireworks-ws"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Durable Object configuration
+[[durable_objects.bindings]]
+name = "FIREWORKS_ROOM"
+class_name = "FireworksRoom"
+
+# Migrations for Durable Objects
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FireworksRoom"]

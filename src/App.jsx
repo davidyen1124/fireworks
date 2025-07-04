@@ -1,15 +1,12 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import './App.css'
+import { useWebSocket } from './hooks/useWebSocket'
+import { generateRoomId } from './utils/roomId'
 
 const colorOptions = [
-  '#dc143c',
-  '#ffffff',
-  '#0000ff',
-  '#ffd700',
-  '#ff4500',
-  '#4ecdc4',
-  '#96ceb4',
-  '#dda0dd',
+  '#B22234', // "Old Glory" red
+  '#FFFFFF', // white
+  '#0033A0', // "Old Glory" blue (a tad brighter than #3C3B6E for better contrast on OLED)
 ]
 
 class Star {
@@ -125,13 +122,15 @@ class Rocket {
 }
 
 function App() {
-  // State hooks
   const [isPointerDown, setIsPointerDown] = useState(false)
   const [brushColor, setBrushColor] = useState(
     () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
   )
+  const initialRoom =
+    new URL(location.href).searchParams.get('room') || 'public'
+  const [roomId, setRoomId] = useState(initialRoom)
+  const isPublicRoom = roomId === 'public'
 
-  // Ref hooks
   const canvasRef = useRef(null)
   const requestIdRef = useRef(null)
   const starsRef = useRef([])
@@ -139,13 +138,21 @@ function App() {
   const particlesRef = useRef([])
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
+  const brushColorRef = useRef(brushColor)
+  const colorPickerRef = useRef(null)
 
-  const createFirework = useCallback(
-    (x, y, color = brushColor) => {
-      rocketsRef.current.push(new Rocket(x, y, color))
+  const createFirework = useCallback((x, y, color) => {
+    rocketsRef.current.push(new Rocket(x, y, color))
+  }, [])
+
+  const handleWsMessage = useCallback(
+    data => {
+      if (data.t === 'launch') createFirework(data.x, data.y, data.color)
     },
-    [brushColor]
+    [createFirework]
   )
+
+  const { broadcast, clientCount } = useWebSocket(roomId, handleWsMessage)
 
   const explodeFirework = useCallback((x, y, color) => {
     const particleCount = 50
@@ -155,10 +162,11 @@ function App() {
   }, [])
 
   const createAndSend = useCallback(
-    (x, y, color = brushColor) => {
+    (x, y, color) => {
       createFirework(x, y, color)
+      broadcast({ t: 'launch', x, y, color })
     },
-    [createFirework, brushColor]
+    [createFirework, broadcast]
   )
 
   const startContinuousFireworks = useCallback(
@@ -167,7 +175,7 @@ function App() {
       if (!fireworkIntervalRef.current) {
         fireworkIntervalRef.current = setInterval(() => {
           const { x, y } = pointerPositionRef.current
-          createAndSend(x, y)
+          createAndSend(x, y, brushColorRef.current)
         }, 100)
       }
     },
@@ -192,11 +200,11 @@ function App() {
   const handlePointerDown = useCallback(
     e => {
       const pos = getPointerPosition(e)
-      createAndSend(pos.x, pos.y)
+      createAndSend(pos.x, pos.y, brushColor)
       setIsPointerDown(true)
       startContinuousFireworks(pos.x, pos.y)
     },
-    [getPointerPosition, startContinuousFireworks, createAndSend]
+    [getPointerPosition, startContinuousFireworks, createAndSend, brushColor]
   )
 
   const handlePointerMove = useCallback(
@@ -213,6 +221,47 @@ function App() {
     stopContinuousFireworks()
   }, [stopContinuousFireworks])
 
+  const toggleRoomMode = useCallback(() => {
+    const nextId = isPublicRoom ? generateRoomId() : 'public'
+    setRoomId(nextId)
+
+    const url = new URL(location.href)
+    if (nextId === 'public') {
+      url.searchParams.delete('room')
+    } else {
+      url.searchParams.set('room', nextId)
+    }
+    window.history.replaceState({}, '', url.toString())
+  }, [isPublicRoom])
+
+  const shareLink = useCallback(async () => {
+    const url = new URL(location.href)
+    const shareUrl = url.toString()
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Fireworks 🎆', url: shareUrl })
+      } catch {
+        // user dismissed sheet
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl)
+      alert('Link copied!')
+    }
+  }, [])
+
+  const handleColorPickerChange = useCallback(
+    e => setBrushColor(e.target.value),
+    []
+  )
+
+  const openColorPicker = useCallback(() => {
+    colorPickerRef.current?.click()
+  }, [])
+
+  useEffect(() => {
+    brushColorRef.current = brushColor
+  }, [brushColor])
   useEffect(() => {
     const canvas = canvasRef.current
 
@@ -346,6 +395,40 @@ function App() {
             />
           )
         })}
+
+        <button
+          className="color-button custom-color-button"
+          style={{ backgroundColor: brushColor }}
+          aria-label="Custom color picker"
+          onClick={openColorPicker}
+        >
+          🎨
+        </button>
+
+        <input
+          ref={colorPickerRef}
+          type="color"
+          value={brushColor}
+          onChange={handleColorPickerChange}
+          className="color-picker-hidden"
+          aria-label="Pick custom color"
+        />
+
+        <button
+          className={`room-toggle ${isPublicRoom ? 'public' : 'private'}`}
+          onClick={toggleRoomMode}
+          title={`Switch to ${isPublicRoom ? 'private' : 'public'} room`}
+        >
+          {isPublicRoom ? '🌐' : '🔒'}
+          {clientCount > 0 && (
+            <span className="badge">
+              {clientCount > 99 ? '99+' : clientCount}
+            </span>
+          )}
+        </button>
+        <button className="share-button" onClick={shareLink}>
+          🔗
+        </button>
       </div>
     </>
   )

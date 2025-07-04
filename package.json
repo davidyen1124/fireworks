@@ -10,7 +10,10 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:worker": "cd worker && wrangler deploy",
+    "deploy:pages": "npm run build && wrangler pages deploy dist",
+    "deploy": "npm run deploy:worker && npm run deploy:pages"
   },
   "dependencies": {
     "react": "^19.1.0",

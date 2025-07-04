@@ -35,4 +35,28 @@ export default [
       ],
     },
   },
+  {
+    files: ['worker/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.serviceworker,
+        WebSocketPair: 'readonly',
+        crypto: 'readonly',
+        console: 'readonly',
+        Response: 'readonly',
+        Request: 'readonly',
+        URL: 'readonly',
+        JSON: 'readonly',
+        Object: 'readonly',
+      },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+    },
+  },
 ]
