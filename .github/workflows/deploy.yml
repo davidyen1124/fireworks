@@ -1,4 +1,10 @@
-name: Deploy to GitHub Pages
+name: 🎆 Deploy Explosive Digital Fireworks (Because Someone Has To)
+
+description: |
+  A hilariously over-engineered deployment pipeline that transforms your caffeinated code 
+  into beautiful digital explosions. Warning: May cause uncontrollable clicking and 
+  existential questions about the meaning of pixel-based pyrotechnics. Side effects 
+  include: joy, wonder, and mild dependency on npm packages you've never heard of.
 
 on:
   push:
@@ -12,39 +18,40 @@ permissions:
 
 jobs:
   deploy:
+    name: 🚀 Launch the Pixels into Orbit
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 📦 Checkout the Goods
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      - name: 🔧 Set up Node (The JavaScript Overlord)
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: 📚 Install Dependencies (AKA Download Half the Internet)
         run: npm install
 
-      - name: Run linter
+      - name: 🔍 Run Linter (The Code Police)
         run: npm run lint
 
-      - name: Check formatting
+      - name: 💅 Check Formatting (Because Aesthetics Matter)
         run: npm run format:check
 
-      - name: Build
+      - name: 🏗️ Build (Transform Coffee Into Website)
         run: npm run build
 
-      - name: Setup Pages
+      - name: 🎪 Setup Pages (Prepare the Stage)
         uses: actions/configure-pages@v4
 
-      - name: Upload artifact
+      - name: 📤 Upload Artifact (Ship It Like It's Hot)
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
 
-      - name: Deploy to GitHub Pages
+      - name: 🎆 Deploy to GitHub Pages (The Grand Finale)
         id: deployment
         uses: actions/deploy-pages@v4
