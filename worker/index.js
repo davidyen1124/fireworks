@@ -1,3 +1,10 @@
+// Rate limiting constants
+const MAX_MSGS_PER_MIN = 120
+const WINDOW_MS = 60_000
+
+// weak-map so the GC cleans up automatically when a socket closes
+const msgTimestamps = new WeakMap() // ws → [t1, t2, …]
+
 // Durable Object for managing fireworks rooms
 export class FireworksRoom {
   constructor(state, env) {
@@ -58,7 +65,21 @@ export class FireworksRoom {
   }
 
   setupWebSocketHandlers(webSocket) {
-    webSocket.addEventListener('message', (event) => {
+    webSocket.addEventListener('message', event => {
+      const now = Date.now()
+      const arr = msgTimestamps.get(webSocket) || []
+      arr.push(now)
+
+      // keep only the ones still inside our rolling window
+      const fresh = arr.filter(t => now - t < WINDOW_MS)
+      msgTimestamps.set(webSocket, fresh)
+
+      if (fresh.length > MAX_MSGS_PER_MIN) {
+        // Too chatty – close with a standard code
+        webSocket.close(1011, 'rate limit')
+        return
+      }
+
       try {
         const data = JSON.parse(event.data)
         console.log('Room: Received message:', data)
@@ -77,6 +98,7 @@ export class FireworksRoom {
     })
 
     webSocket.addEventListener('close', () => {
+      msgTimestamps.delete(webSocket)
       console.log(`Room: Connection ${webSocket.connectionId} closed`)
       this.connections.delete(webSocket)
 
@@ -87,7 +109,7 @@ export class FireworksRoom {
       })
     })
 
-    webSocket.addEventListener('error', (error) => {
+    webSocket.addEventListener('error', error => {
       console.error('Room: WebSocket error:', error)
       this.connections.delete(webSocket)
     })
@@ -97,7 +119,7 @@ export class FireworksRoom {
     const messageStr = JSON.stringify(message)
     let sentCount = 0
 
-    this.connections.forEach((webSocket) => {
+    this.connections.forEach(webSocket => {
       if (webSocket !== sender && webSocket.readyState === 1) {
         try {
           webSocket.send(messageStr)
