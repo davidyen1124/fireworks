@@ -123,13 +123,17 @@ function App() {
   const [isPointerDown, setIsPointerDown] = useState(false)
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
-  const [brushColor, setBrushColor] = useState('#dc143c')
   const colorOptions = [
     '#dc143c',
     '#ffffff',
     '#0000ff',
     '#ffd700',
+    '#ff4500',
+    '#4ecdc4',
+    '#96ceb4',
+    '#dda0dd',
   ]
+  const [brushColor, setBrushColor] = useState(() => colorOptions[Math.floor(Math.random() * colorOptions.length)])
   const netRef = useRef(null)
 
   const createFirework = useCallback(
@@ -233,8 +237,6 @@ function App() {
     netRef.current = initPeer(({ t, ...payload }) => {
       if (t === 'launch') {
         createFirework(payload.x, payload.y, payload.color)
-      } else if (t === 'color_changed') {
-        setBrushColor(payload.color)
       }
     })
   }, [createFirework])
