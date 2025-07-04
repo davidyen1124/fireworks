@@ -3,6 +3,7 @@ import './App.css'
 import { useWebSocket } from './hooks/useWebSocket'
 import { generateRoomId } from './utils/roomId'
 import { randomName } from './utils/randomName'
+import InfoBox from './components/InfoBox'
 
 const colorOptions = [
   '#B22234', // "Old Glory" red
@@ -417,6 +418,17 @@ function App() {
 
   return (
     <>
+      <InfoBox
+        isPublic={isPublicRoom}
+        name={name}
+        clientCount={clientCount}
+        onToggleRoom={toggleRoomMode}
+        onSaveName={newName => {
+          setName(newName)
+          localStorage.setItem('name', newName)
+        }}
+      />
+
       <canvas
         ref={canvasRef}
         onMouseDown={handlePointerDown}
@@ -462,31 +474,6 @@ function App() {
           aria-label="Pick custom color"
         />
 
-        <button
-          className={`room-toggle ${isPublicRoom ? 'public' : 'private'}`}
-          onClick={toggleRoomMode}
-          title={`Switch to ${isPublicRoom ? 'private' : 'public'} room`}
-        >
-          {isPublicRoom ? '🌐' : '🔒'}
-          {clientCount > 0 && (
-            <span className="badge">
-              {clientCount > 99 ? '99+' : clientCount}
-            </span>
-          )}
-        </button>
-        <button
-          className="name-button"
-          title={name}
-          onClick={() => {
-            const newName = prompt('Your display name', name)?.trim()
-            if (newName) {
-              setName(newName)
-              localStorage.setItem('name', newName)
-            }
-          }}
-        >
-          👤
-        </button>
         <button className="share-button" onClick={shareLink}>
           🔗
         </button>
