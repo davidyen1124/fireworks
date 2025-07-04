@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import './App.css'
+import { initPeer } from './network'
 
 class Star {
   constructor(canvasWidth, canvasHeight) {
@@ -31,7 +32,7 @@ class Particle {
     this.radius = Math.random() * 2 + 1
     this.velocity = {
       x: Math.random() * 6 - 3,
-      y: Math.random() * 6 - 3
+      y: Math.random() * 6 - 3,
     }
     this.gravity = 0.2
     this.life = 100
@@ -59,16 +60,16 @@ class Particle {
 }
 
 class Rocket {
-  constructor(x, y) {
+  constructor(x, y, color = `hsl(${Math.random() * 360}, 50%, 50%)`) {
     this.x = x
     this.y = y
     this.radius = 2
     this.velocity = {
       x: Math.random() * 2 - 1,
-      y: -Math.random() * 3 - 9
+      y: -Math.random() * 3 - 9,
     }
     this.gravity = 0.1
-    this.color = `hsl(${Math.random() * 360}, 50%, 50%)`
+    this.color = color
 
     // We'll store previous positions for the trail:
     this.positions = []
@@ -122,10 +123,25 @@ function App() {
   const [isPointerDown, setIsPointerDown] = useState(false)
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
+  const [brushColor, setBrushColor] = useState('#ff4500')
+  const colorOptions = [
+    '#ff4500',
+    '#ff1744',
+    '#4ecdc4',
+    '#45b7d1',
+    '#96ceb4',
+    '#ffeaa7',
+    '#dda0dd',
+    '#98d8c8',
+  ]
+  const netRef = useRef(null)
 
-  const createFirework = useCallback((x, y) => {
-    rocketsRef.current.push(new Rocket(x, y))
-  }, [])
+  const createFirework = useCallback(
+    (x, y, color = brushColor) => {
+      rocketsRef.current.push(new Rocket(x, y, color))
+    },
+    [brushColor]
+  )
 
   const explodeFirework = useCallback((x, y, color) => {
     const particleCount = 50
@@ -134,17 +150,25 @@ function App() {
     }
   }, [])
 
+  const createAndSend = useCallback(
+    (x, y, color = brushColor) => {
+      createFirework(x, y, color)
+      netRef.current?.broadcast({ t: 'launch', x, y, color })
+    },
+    [createFirework, brushColor]
+  )
+
   const startContinuousFireworks = useCallback(
     (x, y) => {
       pointerPositionRef.current = { x, y }
       if (!fireworkIntervalRef.current) {
         fireworkIntervalRef.current = setInterval(() => {
           const { x, y } = pointerPositionRef.current
-          createFirework(x, y)
+          createAndSend(x, y)
         }, 100)
       }
     },
-    [createFirework]
+    [createAndSend]
   )
 
   const stopContinuousFireworks = useCallback(() => {
@@ -165,11 +189,11 @@ function App() {
   const handlePointerDown = useCallback(
     (e) => {
       const pos = getPointerPosition(e)
-      createFirework(pos.x, pos.y)
+      createAndSend(pos.x, pos.y)
       setIsPointerDown(true)
       startContinuousFireworks(pos.x, pos.y)
     },
-    [getPointerPosition, startContinuousFireworks, createFirework]
+    [getPointerPosition, startContinuousFireworks, createAndSend]
   )
 
   const handlePointerMove = useCallback(
@@ -186,16 +210,55 @@ function App() {
     stopContinuousFireworks()
   }, [stopContinuousFireworks])
 
+  const shareLink = useCallback(async () => {
+    const myId = netRef.current?.getMyId()
+    if (!myId) {
+      alert('Please wait for connection to establish')
+      return
+    }
+
+    const url = new URL(location.href)
+    url.searchParams.set('peer', myId)
+    const shareUrl = url.toString()
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Fireworks 🎆', url: shareUrl })
+      } catch {
+        // user dismissed sheet
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl)
+      alert('Link copied!')
+    }
+  }, [])
+
+  useEffect(() => {
+    netRef.current = initPeer(({ t, ...payload }) => {
+      if (t === 'launch') {
+        createFirework(payload.x, payload.y, payload.color)
+      } else if (t === 'color_changed') {
+        setBrushColor(payload.color)
+      }
+    })
+  }, [createFirework])
+
   useEffect(() => {
     const canvas = canvasRef.current
 
     const handleResize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = window.innerWidth * dpr
+      canvas.height = window.innerHeight * dpr
+      canvas.style.width = window.innerWidth + 'px'
+      canvas.style.height = window.innerHeight + 'px'
+
+      const ctx = canvas.getContext('2d')
+      ctx.scale(dpr, dpr)
 
       starsRef.current = Array.from(
         { length: 200 },
-        () => new Star(canvas.width, canvas.height)
+        () => new Star(window.innerWidth, window.innerHeight)
       )
     }
 
@@ -262,6 +325,62 @@ function App() {
   }, [explodeFirework])
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (requestIdRef.current) {
+          cancelAnimationFrame(requestIdRef.current)
+        }
+      } else {
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+
+        const animate = () => {
+          ctx.globalCompositeOperation = 'source-over'
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+          ctx.globalCompositeOperation = 'lighter'
+
+          starsRef.current.forEach((star) => {
+            star.update()
+            star.draw(ctx)
+          })
+
+          const nextRockets = []
+          for (const rocket of rocketsRef.current) {
+            const shouldExplode = rocket.update()
+            rocket.draw(ctx)
+            if (shouldExplode) {
+              explodeFirework(rocket.x, rocket.y, rocket.color)
+            } else {
+              nextRockets.push(rocket)
+            }
+          }
+          rocketsRef.current = nextRockets
+
+          const nextParticles = []
+          for (const particle of particlesRef.current) {
+            particle.update()
+            particle.draw(ctx)
+            if (particle.life > 0 && particle.radius > 0) {
+              nextParticles.push(particle)
+            }
+          }
+          particlesRef.current = nextParticles
+
+          requestIdRef.current = requestAnimationFrame(animate)
+        }
+
+        requestIdRef.current = requestAnimationFrame(animate)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [explodeFirework])
+
+  useEffect(() => {
     return () => {
       stopContinuousFireworks()
     }
@@ -286,18 +405,38 @@ function App() {
   }, [])
 
   return (
-    <canvas
-      ref={canvasRef}
-      onMouseDown={handlePointerDown}
-      onMouseUp={handlePointerUp}
-      onMouseMove={handlePointerMove}
-      onMouseLeave={handlePointerUp}
-      onTouchStart={handlePointerDown}
-      onTouchMove={handlePointerMove}
-      onTouchEnd={handlePointerUp}
-      onTouchCancel={handlePointerUp}
-      className='fireworks-canvas'
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        onMouseDown={handlePointerDown}
+        onMouseUp={handlePointerUp}
+        onMouseMove={handlePointerMove}
+        onMouseLeave={handlePointerUp}
+        onTouchStart={handlePointerDown}
+        onTouchMove={handlePointerMove}
+        onTouchEnd={handlePointerUp}
+        onTouchCancel={handlePointerUp}
+        className="fireworks-canvas"
+      />
+      <div className="controls">
+        {colorOptions.map((color) => {
+          const isMine = brushColor === color
+
+          return (
+            <button
+              key={color}
+              className={`color-button ${isMine ? 'active' : ''}`}
+              style={{ backgroundColor: color }}
+              onClick={() => setBrushColor(color)}
+              aria-label={`Select ${color} color`}
+            />
+          )
+        })}
+        <button className="share-button" onClick={shareLink}>
+          🔗
+        </button>
+      </div>
+    </>
   )
 }
 
