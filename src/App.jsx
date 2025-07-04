@@ -1,6 +1,17 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import './App.css'
 
+const colorOptions = [
+  '#dc143c',
+  '#ffffff',
+  '#0000ff',
+  '#ffd700',
+  '#ff4500',
+  '#4ecdc4',
+  '#96ceb4',
+  '#dda0dd',
+]
+
 class Star {
   constructor(canvasWidth, canvasHeight) {
     this.x = Math.random() * canvasWidth
@@ -122,16 +133,6 @@ function App() {
   const [isPointerDown, setIsPointerDown] = useState(false)
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
-  const colorOptions = [
-    '#dc143c',
-    '#ffffff',
-    '#0000ff',
-    '#ffd700',
-    '#ff4500',
-    '#4ecdc4',
-    '#96ceb4',
-    '#dda0dd',
-  ]
   const [brushColor, setBrushColor] = useState(
     () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
   )
