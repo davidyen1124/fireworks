@@ -276,21 +276,6 @@ function App() {
     window.history.replaceState({}, '', url.toString())
   }, [isPublicRoom])
 
-  const shareLink = useCallback(async () => {
-    const url = new URL(location.href)
-    const shareUrl = url.toString()
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Fireworks 🎆', url: shareUrl })
-      } catch {
-        // user dismissed sheet
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl)
-      alert('Link copied!')
-    }
-  }, [])
 
   const handleColorPickerChange = useCallback(
     e => setBrushColor(e.target.value),
@@ -419,7 +404,7 @@ function App() {
   return (
     <>
       <InfoBox
-        isPublic={isPublicRoom}
+        roomId={roomId}
         name={name}
         clientCount={clientCount}
         onToggleRoom={toggleRoomMode}
@@ -473,10 +458,6 @@ function App() {
           className="color-picker-hidden"
           aria-label="Pick custom color"
         />
-
-        <button className="share-button" onClick={shareLink}>
-          🔗
-        </button>
       </div>
     </>
   )

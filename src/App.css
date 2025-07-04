@@ -60,27 +60,6 @@
   pointer-events: none;
 }
 
-.share-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #FBBF24;
-  border: 2px solid rgba(0, 0, 0, 0.4);
-  color: black;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-}
-
-.share-button:hover {
-  background: #FCD34D;
-  border-color: rgba(0, 0, 0, 0.6);
-  transform: scale(1.1);
-}
 
 
 .custom-color-button {
