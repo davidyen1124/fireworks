@@ -35,6 +35,9 @@ export function initPeer(onEvent) {
     const peerParam = url.searchParams.get('peer')
     if (peerParam && peerParam !== myId) {
       connect(peerParam)
+      // Clean up URL after initiating connection
+      url.searchParams.delete('peer')
+      history.replaceState({}, '', url.toString())
     }
   })
 
