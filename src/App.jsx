@@ -115,10 +115,13 @@ class Rocket {
       // alpha fades from 1 down to 0 as p.life goes from 20 to 0
       const alpha = p.life / 20
 
+      ctx.save()
+      ctx.globalAlpha = alpha
       ctx.beginPath()
       ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI)
-      ctx.fillStyle = `${this.color.slice(0, -1)}, ${alpha})`
+      ctx.fillStyle = this.color
       ctx.fill()
+      ctx.restore()
 
       // Decrement life each frame
       p.life--
@@ -293,10 +296,6 @@ function App() {
     []
   )
 
-  const openColorPicker = useCallback(() => {
-    colorPickerRef.current?.click()
-  }, [])
-
   useEffect(() => {
     brushColorRef.current = brushColor
   }, [brushColor])
@@ -445,16 +444,16 @@ function App() {
           )
         })}
 
-        <button
+        <label
+          htmlFor="color-picker"
           className="color-button custom-color-button"
           style={{ backgroundColor: brushColor }}
-          aria-label="Custom color picker"
-          onClick={openColorPicker}
         >
           🎨
-        </button>
+        </label>
 
         <input
+          id="color-picker"
           ref={colorPickerRef}
           type="color"
           value={brushColor}
