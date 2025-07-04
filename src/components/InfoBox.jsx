@@ -43,19 +43,20 @@ export default function InfoBox({
       {editing && (
         <div className="name-modal-backdrop" onClick={closeEditor}>
           <div className="name-modal" onClick={e => e.stopPropagation()}>
+            <label className="input-label">Display name</label>
             <input
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              placeholder="Display name"
+              placeholder="Enter your name"
               autoFocus
               onKeyDown={e => e.key === 'Enter' && save()}
             />
             <div className="buttons">
-              <button className="ok" onClick={save}>
-                OK
-              </button>
               <button className="cancel" onClick={closeEditor}>
                 Cancel
+              </button>
+              <button className="ok" onClick={save}>
+                OK
               </button>
             </div>
           </div>
