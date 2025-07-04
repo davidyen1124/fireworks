@@ -123,16 +123,12 @@ function App() {
   const [isPointerDown, setIsPointerDown] = useState(false)
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
-  const [brushColor, setBrushColor] = useState('#ff4500')
+  const [brushColor, setBrushColor] = useState('#dc143c')
   const colorOptions = [
-    '#ff4500',
-    '#ff1744',
-    '#4ecdc4',
-    '#45b7d1',
-    '#96ceb4',
-    '#ffeaa7',
-    '#dda0dd',
-    '#98d8c8',
+    '#dc143c',
+    '#ffffff',
+    '#0000ff',
+    '#ffd700',
   ]
   const netRef = useRef(null)
 
