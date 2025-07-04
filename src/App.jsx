@@ -125,17 +125,20 @@ class Rocket {
 }
 
 function App() {
+  // State hooks
+  const [isPointerDown, setIsPointerDown] = useState(false)
+  const [brushColor, setBrushColor] = useState(
+    () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
+  )
+
+  // Ref hooks
   const canvasRef = useRef(null)
   const requestIdRef = useRef(null)
   const starsRef = useRef([])
   const rocketsRef = useRef([])
   const particlesRef = useRef([])
-  const [isPointerDown, setIsPointerDown] = useState(false)
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
-  const [brushColor, setBrushColor] = useState(
-    () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
-  )
 
   const createFirework = useCallback(
     (x, y, color = brushColor) => {
