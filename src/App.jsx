@@ -120,7 +120,7 @@ class Rocket {
       p.life--
     }
 
-    this.positions = this.positions.filter((p) => p.life > 0)
+    this.positions = this.positions.filter(p => p.life > 0)
   }
 }
 
@@ -178,7 +178,7 @@ function App() {
     }
   }, [])
 
-  const getPointerPosition = useCallback((e) => {
+  const getPointerPosition = useCallback(e => {
     if (e.touches) {
       const touch = e.touches[0]
       return { x: touch.clientX, y: touch.clientY }
@@ -187,7 +187,7 @@ function App() {
   }, [])
 
   const handlePointerDown = useCallback(
-    (e) => {
+    e => {
       const pos = getPointerPosition(e)
       createAndSend(pos.x, pos.y)
       setIsPointerDown(true)
@@ -197,7 +197,7 @@ function App() {
   )
 
   const handlePointerMove = useCallback(
-    (e) => {
+    e => {
       if (isPointerDown) {
         pointerPositionRef.current = getPointerPosition(e)
       }
@@ -250,7 +250,7 @@ function App() {
       ctx.globalCompositeOperation = 'lighter'
 
       // 3) Update/draw stars
-      starsRef.current.forEach((star) => {
+      starsRef.current.forEach(star => {
         star.update()
         star.draw(ctx)
       })
@@ -304,7 +304,7 @@ function App() {
 
     const options = { passive: false }
 
-    const preventScroll = (e) => e.preventDefault()
+    const preventScroll = e => e.preventDefault()
 
     canvas.addEventListener('touchstart', preventScroll, options)
     canvas.addEventListener('touchmove', preventScroll, options)
@@ -330,7 +330,7 @@ function App() {
         className="fireworks-canvas"
       />
       <div className="controls">
-        {colorOptions.map((color) => {
+        {colorOptions.map(color => {
           const isMine = brushColor === color
 
           return (

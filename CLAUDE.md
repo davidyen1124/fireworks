@@ -33,7 +33,6 @@ This is a React-based interactive fireworks visualization that uses HTML Canvas 
 - Touch events use `passive: false` to prevent scrolling
 - Vite configured with base path `/fireworks/` for GitHub Pages deployment
 
-
 ### Development Notes
 
 - Built with React 19 and Vite 7

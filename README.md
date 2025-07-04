@@ -5,7 +5,7 @@
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=github&logoColor=white)](https://pages.github.com/)
 [![License: Sarcastic](https://img.shields.io/badge/License-Hilariously%20Sarcastic-ff69b4?style=for-the-badge)](./LICENSE)
-[![Maintained](https://img.shields.io/badge/Maintained-Yes%20(Unfortunately)-green?style=for-the-badge)](https://github.com/davidyen1124/fireworks)
+[![Maintained](<https://img.shields.io/badge/Maintained-Yes%20(Unfortunately)-green?style=for-the-badge>)](https://github.com/davidyen1124/fireworks)
 [![Works on My Machine](https://img.shields.io/badge/Works%20on-My%20Machine-brightgreen?style=for-the-badge)](https://blog.codinghorror.com/the-works-on-my-machine-certification-program/)
 [![Build Status](https://img.shields.io/badge/Build-Probably%20Works-yellow?style=for-the-badge)](https://github.com/davidyen1124/fireworks/actions)
 [![Dependencies](https://img.shields.io/badge/Dependencies-Too%20Many-red?style=for-the-badge)](package.json)
@@ -21,13 +21,13 @@
 [![Tested](https://img.shields.io/badge/Tested-In%20Production-red?style=for-the-badge)](https://github.com/davidyen1124/fireworks)
 [![Security](https://img.shields.io/badge/Security-Through%20Obscurity-yellow?style=for-the-badge)](https://en.wikipedia.org/wiki/Security_through_obscurity)
 
-*Finally, a way to blow stuff up without the FBI showing up at your door!*
+_Finally, a way to blow stuff up without the FBI showing up at your door!_
 
-🎮 [Live Demo](https://davidyen1124.github.io/fireworks/) *(Warning: May cause uncontrollable clicking)*
+🎮 [Live Demo](https://davidyen1124.github.io/fireworks/) _(Warning: May cause uncontrollable clicking)_
 
 ![Interactive Fireworks Preview](media/preview.gif)
 
-*Look at those beautiful pixels exploding in perfect harmony! Just like my code review feedback.*
+_Look at those beautiful pixels exploding in perfect harmony! Just like my code review feedback._
 
 ## 🎆 Features (AKA: What You're Getting Into)
 
@@ -40,7 +40,7 @@
 
 ## 🚀 Getting Started (If You Dare)
 
-*"Another JavaScript project? How original!" - Every developer ever*
+_"Another JavaScript project? How original!" - Every developer ever_
 
 1. Clone this masterpiece (and by masterpiece, I mean organized chaos):
 
@@ -69,7 +69,7 @@ npm run dev
 - **Hold down**: Create continuous fireworks (because one explosion is never enough)
 - **Move while holding**: Create trails (like breadcrumbs, but more explosive)
 
-*Pro tip: If nothing happens, you probably broke it. Congratulations!*
+_Pro tip: If nothing happens, you probably broke it. Congratulations!_
 
 ## 🛠️ Built With (The Usual Suspects)
 
@@ -84,7 +84,7 @@ This project magically deploys itself to GitHub Pages using GitHub Actions. It's
 
 🌐 **Live at**: https://davidyen1124.github.io/fireworks/
 
-*If the site is down, it's not my fault. Blame the internet, climate change, or your ISP.*
+_If the site is down, it's not my fault. Blame the internet, climate change, or your ISP._
 
 ## 🎨 Preview (Spoiler Alert: It's Shiny)
 
@@ -97,6 +97,6 @@ Experience the earth-shattering revelation of clicking on a screen and watching 
 
 ---
 
-*Disclaimer: No actual fireworks were harmed in the making of this project. Your productivity, however, is another story.*
+_Disclaimer: No actual fireworks were harmed in the making of this project. Your productivity, however, is another story._
 
 **Made with ❤️ and an unhealthy amount of caffeine**
