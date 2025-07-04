@@ -162,8 +162,10 @@ function App() {
   const [name, setName] = useState(
     () => localStorage.getItem('name') || randomName()
   )
-  const [brushColor, setBrushColor] = useState(
-    () => colorOptions[Math.floor(Math.random() * colorOptions.length)]
+  const [color, setColor] = useState(
+    () =>
+      localStorage.getItem('color') ||
+      colorOptions[Math.floor(Math.random() * colorOptions.length)]
   )
   const initialRoom =
     new URL(location.href).searchParams.get('room') || 'public'
@@ -178,7 +180,7 @@ function App() {
   const labelsRef = useRef([])
   const pointerPositionRef = useRef({ x: 0, y: 0 })
   const fireworkIntervalRef = useRef(null)
-  const brushColorRef = useRef(brushColor)
+  const colorRef = useRef(color)
   const colorPickerRef = useRef(null)
 
   const createFirework = useCallback((x, y, color, name) => {
@@ -217,7 +219,7 @@ function App() {
       if (!fireworkIntervalRef.current) {
         fireworkIntervalRef.current = setInterval(() => {
           const { x, y } = pointerPositionRef.current
-          createAndSend(x, y, brushColorRef.current)
+          createAndSend(x, y, colorRef.current)
         }, 100)
       }
     },
@@ -242,11 +244,11 @@ function App() {
   const handlePointerDown = useCallback(
     e => {
       const pos = getPointerPosition(e)
-      createAndSend(pos.x, pos.y, brushColor)
+      createAndSend(pos.x, pos.y, color)
       setIsPointerDown(true)
       startContinuousFireworks(pos.x, pos.y)
     },
-    [getPointerPosition, startContinuousFireworks, createAndSend, brushColor]
+    [getPointerPosition, startContinuousFireworks, createAndSend, color]
   )
 
   const handlePointerMove = useCallback(
@@ -276,15 +278,15 @@ function App() {
     window.history.replaceState({}, '', url.toString())
   }, [isPublicRoom])
 
-
-  const handleColorPickerChange = useCallback(
-    e => setBrushColor(e.target.value),
-    []
-  )
+  const handleColorPickerChange = useCallback(e => {
+    const newColor = e.target.value
+    setColor(newColor)
+    localStorage.setItem('color', newColor)
+  }, [])
 
   useEffect(() => {
-    brushColorRef.current = brushColor
-  }, [brushColor])
+    colorRef.current = color
+  }, [color])
   useEffect(() => {
     const canvas = canvasRef.current
 
@@ -427,16 +429,19 @@ function App() {
         className="fireworks-canvas"
       />
       <div className="controls">
-        {colorOptions.map(color => {
-          const isMine = brushColor === color
+        {colorOptions.map(colorOption => {
+          const isMine = color === colorOption
 
           return (
             <button
-              key={color}
+              key={colorOption}
               className={`color-button ${isMine ? 'active' : ''}`}
-              style={{ backgroundColor: color }}
-              onClick={() => setBrushColor(color)}
-              aria-label={`Select ${color} color`}
+              style={{ backgroundColor: colorOption }}
+              onClick={() => {
+                setColor(colorOption)
+                localStorage.setItem('color', colorOption)
+              }}
+              aria-label={`Select ${colorOption} color`}
             />
           )
         })}
@@ -444,7 +449,7 @@ function App() {
         <label
           htmlFor="color-picker"
           className="color-button custom-color-button"
-          style={{ backgroundColor: brushColor }}
+          style={{ backgroundColor: color }}
         >
           🎨
         </label>
@@ -453,7 +458,7 @@ function App() {
           id="color-picker"
           ref={colorPickerRef}
           type="color"
-          value={brushColor}
+          value={color}
           onChange={handleColorPickerChange}
           className="color-picker-hidden"
           aria-label="Pick custom color"
