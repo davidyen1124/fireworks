@@ -17,23 +17,24 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
-    name: 🚀 Launch the Pixels into Orbit
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: 🏗️ Build the Explosive Experience
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
     steps:
       - name: 📦 Checkout the Goods
         uses: actions/checkout@v4
 
-      - name: 🔧 Set up Node (The JavaScript Overlord)
+      - name: 🔧 Set up Node ${{ matrix.node-version }} (The JavaScript Overlord)
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
       - name: 📚 Install Dependencies (AKA Download Half the Internet)
-        run: npm install
+        run: npm ci
 
       - name: 🔍 Run Linter (The Code Police)
         run: npm run lint
@@ -44,10 +45,31 @@ jobs:
       - name: 🏗️ Build (Transform Coffee Into Website)
         run: npm run build
 
+      - name: 📤 Upload Build Artifact (Package the Goods)
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files-${{ matrix.node-version }}
+          path: './dist'
+          retention-days: 1
+
+  deploy:
+    name: 🚀 Launch the Pixels into Orbit
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 📦 Download Build Artifact (Retrieve the Goods)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files-22.x
+          path: './dist'
+
       - name: 🎪 Setup Pages (Prepare the Stage)
         uses: actions/configure-pages@v4
 
-      - name: 📤 Upload Artifact (Ship It Like It's Hot)
+      - name: 📤 Upload Pages Artifact (Ship It Like It's Hot)
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
