@@ -64,6 +64,54 @@ export class FireworksRoom {
     })
   }
 
+  validateLaunchMessage(data) {
+    // Check required fields exist
+    if (
+      !Object.prototype.hasOwnProperty.call(data, 'x') ||
+      !Object.prototype.hasOwnProperty.call(data, 'y') ||
+      !Object.prototype.hasOwnProperty.call(data, 'color')
+    ) {
+      return false
+    }
+
+    // Validate coordinates are numbers within reasonable canvas bounds
+    if (
+      typeof data.x !== 'number' ||
+      typeof data.y !== 'number' ||
+      !Number.isFinite(data.x) ||
+      !Number.isFinite(data.y) ||
+      data.x < -100 ||
+      data.x > 5000 ||
+      data.y < -100 ||
+      data.y > 5000
+    ) {
+      return false
+    }
+
+    // Validate color format (hex colors or basic named colors)
+    if (typeof data.color !== 'string' || data.color.length > 50) {
+      return false
+    }
+
+    // Allow hex colors (#RGB, #RRGGBB) and basic named colors
+    const validColor =
+      /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(data.color) ||
+      /^[a-zA-Z]+$/.test(data.color)
+
+    if (!validColor) {
+      return false
+    }
+
+    // Validate name if present
+    if (data.name !== undefined) {
+      if (typeof data.name !== 'string' || data.name.length > 20) {
+        return false
+      }
+    }
+
+    return true
+  }
+
   setupWebSocketHandlers(webSocket) {
     webSocket.addEventListener('message', event => {
       const now = Date.now()
@@ -84,13 +132,18 @@ export class FireworksRoom {
         const data = JSON.parse(event.data)
         console.log('Room: Received message:', data)
 
-        // Validate name length if present
-        if (data.name && data.name.length > 20) {
-          webSocket.close(1003, 'name too long')
+        // Handle ping messages for heartbeat
+        if (data.type === 'ping') {
           return
         }
 
+        // Validate launch messages
         if (data.t === 'launch') {
+          if (!this.validateLaunchMessage(data)) {
+            webSocket.close(1003, 'invalid payload')
+            return
+          }
+
           console.log(
             'Room: Broadcasting firework to',
             this.connections.size - 1,
@@ -100,6 +153,7 @@ export class FireworksRoom {
         }
       } catch (error) {
         console.error('Room: Error parsing message:', error)
+        webSocket.close(1003, 'invalid json')
       }
     })
 
