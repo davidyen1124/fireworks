@@ -104,10 +104,11 @@ export class FireworksRoom {
     }
 
     // Validate name if present
-    if (data.name !== undefined) {
-      if (typeof data.name !== 'string' || data.name.length > 20) {
-        return false
-      }
+    if (
+      data.name !== undefined &&
+      (typeof data.name !== 'string' || data.name.length > 20)
+    ) {
+      return false
     }
 
     return true
