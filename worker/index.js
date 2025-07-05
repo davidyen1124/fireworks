@@ -81,15 +81,23 @@ export class FireworksRoom {
       return false
     }
 
-    // Validate color format (hex colors or basic named colors)
-    if (typeof data.color !== 'string' || data.color.length > 50) {
+    // Validate color format (reasonable length limit as safety net)
+    if (typeof data.color !== 'string' || data.color.length > 30) {
       return false
     }
 
-    // Allow hex colors (#RGB, #RRGGBB) and basic named colors
+    // Allow hex colors (#RGB, #RRGGBB), HSL, RGB, RGBA, and basic named colors
     const validColor =
       /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(data.color) ||
-      /^[a-zA-Z]+$/.test(data.color)
+      /^[a-zA-Z]+$/.test(data.color) ||
+      /^hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)$/.test(data.color) ||
+      /^hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[01]?\.?\d*\s*\)$/.test(
+        data.color
+      ) ||
+      /^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/.test(data.color) ||
+      /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[01]?\.?\d*\s*\)$/.test(
+        data.color
+      )
 
     if (!validColor) {
       return false
