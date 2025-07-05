@@ -110,7 +110,7 @@ export default function InfoBox({
       {editing && (
         <div className="name-modal-backdrop" onClick={closeEditor}>
           <div className="name-modal" onClick={e => e.stopPropagation()}>
-            <label className="input-label">Display name</label>
+            <label className="input-label">Name</label>
             <input
               value={draft}
               onChange={e => setDraft(e.target.value)}
