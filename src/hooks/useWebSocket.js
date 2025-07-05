@@ -8,10 +8,9 @@ export function useWebSocket(
   const wsRef = useRef(null)
   const reconnectRef = useRef(0)
 
-  const [myId, setMyId] = useState(null)
   const [clientCount, setClientCount] = useState(0)
 
-  const broadcast = useCallback((data) => {
+  const broadcast = useCallback(data => {
     const ws = wsRef.current
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(data))
@@ -42,7 +41,7 @@ export function useWebSocket(
         }, 30000)
       }
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         let data
         try {
           data = JSON.parse(event.data)
@@ -52,7 +51,6 @@ export function useWebSocket(
 
         switch (data.type) {
           case 'connected':
-            setMyId(data.id)
             setClientCount(data.clientCount)
             break
           case 'client_joined':
@@ -64,7 +62,7 @@ export function useWebSocket(
         }
       }
 
-      ws.onclose = (ev) => {
+      ws.onclose = ev => {
         clearInterval(pingId)
         if (ev.code === 1000) return // intentional
 
@@ -84,5 +82,5 @@ export function useWebSocket(
     }
   }, [roomId, reconnectAttempts, baseDelay, onMessage])
 
-  return { myId, clientCount, broadcast }
+  return { clientCount, broadcast }
 }

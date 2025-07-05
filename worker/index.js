@@ -27,21 +27,15 @@ export class FireworksRoom {
 
     server.accept()
 
-    const connectionId = crypto.randomUUID()
-    server.connectionId = connectionId
-
     // Add to connections
     this.connections.add(server)
 
-    console.log(
-      `Room: New connection ${connectionId}, total: ${this.connections.size}`
-    )
+    console.log(`Room: New connection, total: ${this.connections.size}`)
 
     // Send connection confirmation
     server.send(
       JSON.stringify({
         type: 'connected',
-        id: connectionId,
         clientCount: this.connections.size,
       })
     )
@@ -50,7 +44,6 @@ export class FireworksRoom {
     this.broadcast(
       {
         type: 'client_joined',
-        id: connectionId,
         clientCount: this.connections.size,
       },
       server
@@ -159,12 +152,11 @@ export class FireworksRoom {
 
     webSocket.addEventListener('close', () => {
       msgTimestamps.delete(webSocket)
-      console.log(`Room: Connection ${webSocket.connectionId} closed`)
+      console.log('Room: Connection closed')
       this.connections.delete(webSocket)
 
       this.broadcast({
         type: 'client_left',
-        id: webSocket.connectionId,
         clientCount: this.connections.size,
       })
     })
