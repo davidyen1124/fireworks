@@ -1,9 +1,9 @@
 // Rate limiting constants
-const MAX_MSGS_PER_MIN = 120
-const WINDOW_MS = 60_000
-
+const MAX_TOKENS = 120 // bucket capacity (≈120 msgs / min)
+const TOKENS_PER_MS = 2 / 1000 // refill speed: 2 tokens every second
 // weak-map so the GC cleans up automatically when a socket closes
-const msgTimestamps = new WeakMap() // ws → [t1, t2, …]
+// ws → { tokens: number, lastRefill: number }
+const buckets = new WeakMap()
 
 // Durable Object for managing fireworks rooms
 export class FireworksRoom {
@@ -129,18 +129,28 @@ export class FireworksRoom {
 
     webSocket.addEventListener('message', event => {
       const now = Date.now()
-      const arr = msgTimestamps.get(webSocket) || []
-      arr.push(now)
 
-      // keep only the ones still inside our rolling window
-      const fresh = arr.filter(t => now - t < WINDOW_MS)
-      msgTimestamps.set(webSocket, fresh)
+      // Get or create this socket's bucket
+      let bucket = buckets.get(webSocket)
+      if (!bucket) {
+        bucket = { tokens: MAX_TOKENS, lastRefill: now }
+        buckets.set(webSocket, bucket)
+      }
 
-      if (fresh.length > MAX_MSGS_PER_MIN) {
-        // Too chatty – close with a standard code
+      // Refill tokens based on elapsed time
+      const elapsed = now - bucket.lastRefill
+      bucket.tokens = Math.min(
+        MAX_TOKENS,
+        bucket.tokens + elapsed * TOKENS_PER_MS
+      )
+      bucket.lastRefill = now
+
+      // Consume 1 token for this message
+      if (bucket.tokens < 1) {
         webSocket.close(1011, 'rate limit')
         return
       }
+      bucket.tokens -= 1
 
       try {
         const data = JSON.parse(event.data)
@@ -167,7 +177,7 @@ export class FireworksRoom {
     })
 
     webSocket.addEventListener('close', () => {
-      msgTimestamps.delete(webSocket)
+      buckets.delete(webSocket)
       console.log('Room: Connection closed')
       this.connections.delete(webSocket)
 
