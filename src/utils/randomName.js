@@ -8,7 +8,7 @@ import {
 export const randomName = () =>
   uniqueNamesGenerator({
     dictionaries: [adjectives, colors, animals],
-    separator: '-',
+    separator: ' ',
     style: 'capital',
     length: 2,
   })
