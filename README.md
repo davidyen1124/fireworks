@@ -1,4 +1,4 @@
-# 🎆 Interactive Fireworks: Because Your Life Needs More Explosions
+# 🎆 Fireworks Together: Because Your Life Needs More Explosions
 
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
 [![Powered by Canvas](https://img.shields.io/badge/Powered%20by-HTML5%20Canvas-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
@@ -25,7 +25,7 @@ _Finally, a way to blow stuff up without the FBI showing up at your door!_
 
 🎮 [Live Demo](https://davidyen1124.github.io/fireworks/) _(Warning: May cause uncontrollable clicking)_
 
-![Interactive Fireworks Preview](media/preview.gif)
+![Fireworks Together Preview](media/preview.gif)
 
 _Look at those beautiful pixels exploding in perfect harmony! Just like my code review feedback._
 

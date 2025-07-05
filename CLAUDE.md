@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a React-based interactive fireworks visualization that uses HTML Canvas for rendering and WebSocket for real-time multiplayer functionality. The app is deployed on Cloudflare infrastructure.
+This is a React-based collaborative fireworks visualization that uses HTML Canvas for rendering and WebSocket for real-time multiplayer functionality. The app is deployed on Cloudflare infrastructure.
 
 ### Core Components
 
