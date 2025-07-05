@@ -1,16 +1,12 @@
 // Rate limiting constants
 const MAX_TOKENS = 120 // bucket capacity (≈120 msgs / min)
 const TOKENS_PER_MS = 2 / 1000 // refill speed: 2 tokens every second
-// weak-map so the GC cleans up automatically when a socket closes
-// ws → { tokens: number, lastRefill: number }
-const buckets = new WeakMap()
 
 // Durable Object for managing fireworks rooms
 export class FireworksRoom {
-  constructor(state, env) {
-    this.state = state
+  constructor(ctx, env) {
+    this.ctx = ctx
     this.env = env
-    this.connections = new Set()
   }
 
   async fetch(request) {
@@ -25,18 +21,18 @@ export class FireworksRoom {
     const webSocketPair = new WebSocketPair()
     const [client, server] = Object.values(webSocketPair)
 
-    server.accept()
+    // Use hibernatable accept instead of server.accept()
+    this.ctx.acceptWebSocket(server)
 
-    // Add to connections
-    this.connections.add(server)
+    const clientCount = this.ctx.getWebSockets().length
 
-    console.log(`Room: New connection, total: ${this.connections.size}`)
+    console.log(`Room: New connection, total: ${clientCount}`)
 
     // Send connection confirmation
     server.send(
       JSON.stringify({
         type: 'connected',
-        clientCount: this.connections.size,
+        clientCount: clientCount,
       })
     )
 
@@ -44,12 +40,10 @@ export class FireworksRoom {
     this.broadcast(
       {
         type: 'client_joined',
-        clientCount: this.connections.size,
+        clientCount: clientCount,
       },
       server
     )
-
-    this.setupWebSocketHandlers(server)
 
     return new Response(null, {
       status: 101,
@@ -81,15 +75,15 @@ export class FireworksRoom {
       return false
     }
 
-    // Validate color format (reasonable length limit as safety net)
-    if (typeof data.color !== 'string' || data.color.length > 30) {
+    // Validate color format
+    if (typeof data.color !== 'string') {
       return false
     }
 
     // Allow hex colors (#RGB, #RRGGBB), HSL, RGB, RGBA, and basic named colors
     const validColor =
       /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(data.color) ||
-      /^[a-zA-Z]+$/.test(data.color) ||
+      /^[a-zA-Z]{1,20}$/.test(data.color) ||
       /^hsl\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*\)$/.test(data.color) ||
       /^hsla\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*,\s*[01]?\.?\d*\s*\)$/.test(
         data.color
@@ -114,102 +108,104 @@ export class FireworksRoom {
     return true
   }
 
-  setupWebSocketHandlers(webSocket) {
-    // Set up automatic ping/pong responses that work even when hibernated
-    webSocket.serializeAttachment({
-      ...webSocket.deserializeAttachment(),
-      hibernatable: true,
-    })
+  async webSocketMessage(ws, raw) {
+    const now = Date.now()
 
-    // Configure automatic response for ping messages
-    this.state.setWebSocketAutoResponse({
-      request: '{"type":"ping"}',
-      response: '{"type":"pong"}',
-    })
+    // Get or create rate limiting data from socket attachment (survives hibernation)
+    let meta = ws.deserializeAttachment() ?? {
+      tokens: MAX_TOKENS,
+      last: now,
+      lastLaunch: 0,
+      launchCount: 0,
+    }
 
-    webSocket.addEventListener('message', event => {
-      const now = Date.now()
+    // Refill tokens based on elapsed time
+    const elapsed = Math.min(now - meta.last, 600_000) // 10 min cap
+    meta.tokens = Math.min(MAX_TOKENS, meta.tokens + elapsed * TOKENS_PER_MS)
+    meta.last = now
 
-      // Get or create this socket's bucket
-      let bucket = buckets.get(webSocket)
-      if (!bucket) {
-        bucket = { tokens: MAX_TOKENS, lastRefill: now }
-        buckets.set(webSocket, bucket)
-      }
+    // Consume 1 token for this message
+    if (meta.tokens < 1) {
+      ws.close(1008, 'rate limit')
+      return
+    }
+    meta.tokens -= 1
 
-      // Refill tokens based on elapsed time
-      const elapsed = now - bucket.lastRefill
-      bucket.tokens = Math.min(
-        MAX_TOKENS,
-        bucket.tokens + elapsed * TOKENS_PER_MS
-      )
-      bucket.lastRefill = now
+    try {
+      const data = JSON.parse(raw)
+      console.log('Room: Received message:', data)
 
-      // Consume 1 token for this message
-      if (bucket.tokens < 1) {
-        webSocket.close(1011, 'rate limit')
-        return
-      }
-      bucket.tokens -= 1
+      // Validate launch messages
+      if (data.t === 'launch') {
+        if (!this.validateLaunchMessage(data)) {
+          ws.close(1003, 'invalid payload')
+          return
+        }
 
-      try {
-        const data = JSON.parse(event.data)
-        console.log('Room: Received message:', data)
-
-        // Validate launch messages
-        if (data.t === 'launch') {
-          if (!this.validateLaunchMessage(data)) {
-            webSocket.close(1003, 'invalid payload')
+        // Launch frequency limiting (5 launches/sec)
+        const launchWindow = 1000 // 1 second window
+        if (now - meta.lastLaunch < launchWindow) {
+          meta.launchCount += 1
+          if (meta.launchCount > 5) {
+            ws.close(1008, 'launch rate limit')
             return
           }
+        } else {
+          meta.launchCount = 1
+        }
+        meta.lastLaunch = now
 
+        // Only log broadcasts occasionally to avoid log spam
+        if (Math.random() < 0.1) {
           console.log(
             'Room: Broadcasting firework to',
-            this.connections.size - 1,
+            this.ctx.getWebSockets().length - 1,
             'clients'
           )
-          this.broadcast(data, webSocket)
         }
-      } catch (error) {
-        console.error('Room: Error parsing message:', error)
-        webSocket.close(1003, 'invalid json')
+        this.broadcast(data, ws)
       }
-    })
+    } catch (error) {
+      console.error('Room: Error parsing message:', error)
+      ws.close(1003, 'invalid json')
+    }
 
-    webSocket.addEventListener('close', () => {
-      buckets.delete(webSocket)
-      console.log('Room: Connection closed')
-      this.connections.delete(webSocket)
+    ws.serializeAttachment(meta)
+  }
 
-      this.broadcast({
-        type: 'client_left',
-        clientCount: this.connections.size,
-      })
-    })
+  async webSocketClose() {
+    console.log('Room: Connection closed')
 
-    webSocket.addEventListener('error', error => {
-      console.error('Room: WebSocket error:', error)
-      this.connections.delete(webSocket)
+    this.broadcast({
+      type: 'client_left',
+      clientCount: this.ctx.getWebSockets().length,
     })
+  }
+
+  async webSocketError(ws, error) {
+    console.error('Room: WebSocket error:', error)
   }
 
   broadcast(message, sender = null) {
     const messageStr = JSON.stringify(message)
     let sentCount = 0
 
-    this.connections.forEach(webSocket => {
-      if (webSocket !== sender && webSocket.readyState === 1) {
+    this.ctx.getWebSockets().forEach(webSocket => {
+      if (webSocket !== sender) {
         try {
           webSocket.send(messageStr)
           sentCount++
         } catch (error) {
-          console.error('Room: Error sending message:', error)
-          this.connections.delete(webSocket)
+          console.error('Room: Error sending message, dropping socket:', error)
+          // Socket is likely closed or in bad state, let it be cleaned up
         }
       }
     })
 
-    console.log(`Room: Broadcast sent to ${sentCount} connections`)
+    // Only log broadcast results occasionally to avoid log spam
+    if (Math.random() < 0.1) {
+      console.log(`Room: Broadcast sent to ${sentCount} connections`)
+    }
   }
 }
 
@@ -217,7 +213,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url)
 
-    // Handle WebSocket upgrade
     if (request.headers.get('Upgrade') === 'websocket') {
       const roomId = url.searchParams.get('room') || 'public'
 
@@ -229,7 +224,6 @@ export default {
       return roomObject.fetch(request)
     }
 
-    // Handle CORS preflight requests
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 200,
@@ -242,7 +236,6 @@ export default {
       })
     }
 
-    // Default response for non-WebSocket requests
     return new Response('Fireworks WebSocket Server with Durable Objects', {
       status: 200,
       headers: {
