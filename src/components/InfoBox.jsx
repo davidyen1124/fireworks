@@ -47,7 +47,7 @@ export default function InfoBox({
             <span className="info-label">Name:</span>
             <span className="info-value">{name}</span>
           </div>
-          <div className="info-hint">Tap to change</div>
+          <div className="info-hint">Tap to change name</div>
         </div>
       </div>
 
