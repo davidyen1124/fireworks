@@ -20,8 +20,10 @@ export default function InfoBox({
 
   const save = () => {
     const trimmed = draft.trim()
-    if (trimmed) onSaveName(trimmed)
-    setEditing(false)
+    if (trimmed && trimmed.length <= 20) {
+      onSaveName(trimmed)
+      setEditing(false)
+    }
   }
 
   return (
@@ -57,6 +59,7 @@ export default function InfoBox({
               value={draft}
               onChange={e => setDraft(e.target.value)}
               placeholder="Enter your name"
+              maxLength={20}
               autoFocus
               onKeyDown={e => e.key === 'Enter' && save()}
             />

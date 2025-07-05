@@ -84,6 +84,12 @@ export class FireworksRoom {
         const data = JSON.parse(event.data)
         console.log('Room: Received message:', data)
 
+        // Validate name length if present
+        if (data.name && data.name.length > 20) {
+          webSocket.close(1003, 'name too long')
+          return
+        }
+
         if (data.t === 'launch') {
           console.log(
             'Room: Broadcasting firework to',
