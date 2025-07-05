@@ -1,19 +1,24 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import PropTypes from 'prop-types'
 import './SharePopup.css'
 
 export default function SharePopup({ onClose }) {
+  const [copied, setCopied] = useState(false)
+
   const handlePopupShareClick = useCallback(async () => {
     const url = new URL(location.href)
     const shareUrl = url.toString()
 
     try {
       await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => {
+        onClose()
+      }, 1000)
     } catch (error) {
       console.log('Copy failed:', error)
+      onClose()
     }
-
-    onClose()
   }, [onClose])
 
   return (
@@ -29,8 +34,9 @@ export default function SharePopup({ onClose }) {
             <button
               className="popup-share-button"
               onClick={handlePopupShareClick}
+              disabled={copied}
             >
-              🔗 Copy Link
+              {copied ? '✅ Copied!' : '🔗 Copy Link'}
             </button>
           </div>
         </div>
