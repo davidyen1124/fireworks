@@ -4,6 +4,7 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { generateRoomId } from './utils/roomId'
 import { randomName } from './utils/randomName'
 import InfoBox from './components/InfoBox'
+import SharePopup from './components/SharePopup'
 
 const colorOptions = [
   '#B22234', // "Old Glory" red
@@ -171,7 +172,7 @@ function App() {
     new URL(location.href).searchParams.get('room') || 'public'
   const [roomId, setRoomId] = useState(initialRoom)
   const isPublicRoom = roomId === 'public'
-  const [copying, setCopying] = useState(false)
+  const [showSharePopup, setShowSharePopup] = useState(false)
 
   const canvasRef = useRef(null)
   const requestIdRef = useRef(null)
@@ -277,6 +278,11 @@ function App() {
       url.searchParams.set('room', nextId)
     }
     window.history.replaceState({}, '', url.toString())
+
+    // Show popup when switching to private room
+    if (isPublicRoom) {
+      setShowSharePopup(true)
+    }
   }, [isPublicRoom])
 
   const handleColorPickerChange = useCallback(e => {
@@ -285,74 +291,9 @@ function App() {
     localStorage.setItem('color', newColor)
   }, [])
 
-  const shareLink = useCallback(async () => {
-    const url = new URL(location.href)
-    const shareUrl = url.toString()
-    const shareTitle = 'Join my fireworks room!'
-    const shareText = `Come create fireworks with me in room: ${roomId === 'public' ? 'Public' : roomId}`
-
-    try {
-      // Try Web Share API first (native sharing on mobile/desktop)
-      if (navigator.share) {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: shareUrl,
-        })
-        return
-      }
-
-      // Fallback to clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl)
-      } else {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea')
-        textArea.value = shareUrl
-        textArea.style.cssText = `
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 2em;
-          height: 2em;
-          padding: 0;
-          border: none;
-          outline: none;
-          box-shadow: none;
-          background: transparent;
-          opacity: 0;
-          pointer-events: none;
-        `
-
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-
-        try {
-          document.execCommand('copy')
-        } catch (copyError) {
-          console.log('Manual copy failed:', copyError)
-        }
-
-        document.body.removeChild(textArea)
-      }
-    } catch (error) {
-      console.log('Share failed:', error)
-    }
-  }, [roomId])
-
   const handleShareClick = useCallback(async () => {
-    // Check if Web Share API is available
-    if (navigator.share) {
-      // Don't show copying feedback for native share
-      await shareLink()
-    } else {
-      // Show copying feedback for clipboard fallback
-      setCopying(true)
-      await shareLink()
-      setTimeout(() => setCopying(false), 1500)
-    }
-  }, [shareLink])
+    setShowSharePopup(true)
+  }, [])
 
   useEffect(() => {
     colorRef.current = color
@@ -486,6 +427,10 @@ function App() {
         }}
       />
 
+      {showSharePopup && (
+        <SharePopup onClose={() => setShowSharePopup(false)} />
+      )}
+
       <canvas
         ref={canvasRef}
         onMouseDown={handlePointerDown}
@@ -538,9 +483,9 @@ function App() {
           className="share-button"
           onClick={handleShareClick}
           aria-label="Share room link"
-          title={copying ? 'Copied!' : 'Share room'}
+          title="Share room link"
         >
-          {copying ? '✓' : '🔗'}
+          🔗
         </button>
       </div>
     </>
