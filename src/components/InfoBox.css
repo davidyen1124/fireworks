@@ -87,7 +87,7 @@
   }
 }
 
-.name-modal-backdrop {
+.modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
@@ -96,7 +96,7 @@
   z-index: 4;
 }
 
-.name-modal {
+.modal {
   background: #222;
   border: 1px solid #333;
   padding: 16px;
@@ -115,7 +115,7 @@
   margin-bottom: -4px;
 }
 
-.name-modal input {
+.modal input {
   padding: 8px 12px;
   border-radius: 2px;
   border: 1px solid #444;
@@ -127,21 +127,21 @@
   color: #fff;
 }
 
-.name-modal input:focus {
+.modal input:focus {
   border-color: #666;
 }
 
-.name-modal input::placeholder {
+.modal input::placeholder {
   color: #999;
 }
 
-.name-modal .buttons {
+.modal .buttons {
   display: flex;
   gap: 8px;
 }
 
-.name-modal .ok,
-.name-modal .cancel {
+.modal .ok,
+.modal .cancel {
   flex: 1;
   padding: 6px 12px;
   border-radius: 2px;
@@ -154,7 +154,7 @@
   color: #fff;
 }
 
-.name-modal .ok:hover,
-.name-modal .cancel:hover {
+.modal .ok:hover,
+.modal .cancel:hover {
   background: #444;
 }
