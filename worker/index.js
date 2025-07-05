@@ -106,6 +106,18 @@ export class FireworksRoom {
   }
 
   setupWebSocketHandlers(webSocket) {
+    // Set up automatic ping/pong responses that work even when hibernated
+    webSocket.serializeAttachment({
+      ...webSocket.deserializeAttachment(),
+      hibernatable: true,
+    })
+
+    // Configure automatic response for ping messages
+    this.state.setWebSocketAutoResponse({
+      request: '{"type":"ping"}',
+      response: '{"type":"pong"}',
+    })
+
     webSocket.addEventListener('message', event => {
       const now = Date.now()
       const arr = msgTimestamps.get(webSocket) || []
@@ -124,11 +136,6 @@ export class FireworksRoom {
       try {
         const data = JSON.parse(event.data)
         console.log('Room: Received message:', data)
-
-        // Handle ping messages for heartbeat
-        if (data.type === 'ping') {
-          return
-        }
 
         // Validate launch messages
         if (data.t === 'launch') {
